@@ -14,6 +14,9 @@ var e = function (err) {
   } else {return false;}
 }
 
+// Tells dust to respect whitespace in templates
+dust.config.whitespace = true;
+
 /*
  * Takes in the file system paths (relative and absolute) of a dust template 
  * file, a key file containing a JSON object (and nothing else), and an output 
