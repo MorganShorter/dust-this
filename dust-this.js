@@ -29,7 +29,10 @@ var dustThis = function (keyFile) {
   fs.readFile(keyFile, function (err, data) {  
       e(err);
       var keys = JSON.parse(data);
-      // If there are partials, compile and load each of them iteratively first
+      /* If there are partials, compile and load each of them iteratively first
+       * NOTE: There is no exception handling. These templates MUST compile for 
+       * things to work
+       */
       if (keys.partials) {
 	for (var i = 0; i < keys.partials.length; i++) {
 	  var compiled = dust.compile(fs.readFileSync(keys.partials[i]).toString(), keys.partials[i]);
@@ -43,7 +46,7 @@ var dustThis = function (keyFile) {
       dust.render(keys.template, keys, function(err, out) {
 	  e(err);
 	  fs.writeFile(keys.output_file, out);	
-	  c(out);
+	  //c(out);
       });   
   });
 }
