@@ -2,9 +2,9 @@
 
 var dust = require('dustjs-linkedin');
 var fs = require('fs');
-var templateFile = process.argv[2];
-var keyFile = process.argv[3];
-var outputFile = process.argv[4];
+//var templateFile = process.argv[2];
+var keyFile = process.argv[2];
+//var outputFile = process.argv[4];
 var c = console.log;
 
 // pain free error catching
@@ -24,30 +24,31 @@ dust.config.whitespace = true;
  * 
  * This overwrites any existing data in the output file without warning. BE CAREFUL!
  */
-var dustThis = function (templateFile, keyFile, outputFile) {
-  //read template file then pass the buffer to the callback for futher processing
-  fs.readFile(templateFile, function (err, data) {
-    e(err);
-    
-    // compile the template and give it the name template
-    var compiled = dust.compile(data.toString(), "template");
-    
-    // load the compiled template into the dust template cache
-    dust.loadSource(compiled);
-    
-    //read the keyFile and parse as a JSON object, then pass to dust.render
-    fs.readFile(keyFile, function (err, data) {  
+var dustThis = function (keyFile) {
+  // Read the keyFile and parse as a JSON object
+  fs.readFile(keyFile, function (err, data) {  
       e(err);
-      // render the cached template and write it to a file
-      dust.render("template", JSON.parse(data), function(err, out) {
-	e(err);
-	fs.writeFile(outputFile, out);
-      });
-    });
+      var keys = JSON.parse(data);
+      // If there are partials, compile and load each of them iteratively first
+      if (keys.partials) {
+	for (var i = 0; i < keys.partials.length; i++) {
+	  var compiled = dust.compile(fs.readFileSync(keys.partials[i]).toString(), keys.partials[i]);
+	  dust.loadSource(compiled);
+	}
+      }
+      // Compile and load the main template
+      var compiled = dust.compile(fs.readFileSync(keys.template).toString(), keys.template);
+      dust.loadSource(compiled);
+      // Render the main template and write it to a file
+      dust.render(keys.template, keys, function(err, out) {
+	  e(err);
+	  fs.writeFile(keys.output_file, out);	
+	  c(out);
+      });   
   });
 }
 
-dustThis(templateFile, keyFile, outputFile);
+dustThis(keyFile);
 
 //export for easy looping and inclusion in larger projects
 exports = dustThis;
