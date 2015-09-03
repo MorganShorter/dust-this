@@ -1,15 +1,10 @@
+//Dust-this. Copyright (c) 2015, Morgan Shorter-McFarlane
 //Creates a text file from template files using Dust.js
 
 var dust = require('dustjs-linkedin');
 var fs = require('fs');
 var keyFile = process.argv[2];
 
-// Pain free error catching.
-var e = function (err) {
-  if (err) {
-    throw err;
-  } else {return false;}
-}
 
 // Tells dust to respect whitespace in templates
 dust.config.whitespace = true;
@@ -21,28 +16,34 @@ dust.config.whitespace = true;
  * This overwrites any existing data in the output file without warning. BE CAREFUL!
  */
 var dustThis = function (keyFile) {
+  console.log("\nDust-this\nCopyright (c) 2015, Morgan Shorter-McFarlane\n");
   // Read the keyFile and parse as a JSON object
   fs.readFile(keyFile, function (err, data) {  
-      e(err);
+      if(err){throw err;}
       var keys = JSON.parse(data);
+
       /* If there are partials, compile and load each of them iteratively first
        * NOTE: There is no exception handling. These templates MUST compile for 
        * things to work
        */
-      var compiled;
       if (keys.partials) {
-	for (var i = 0; i < keys.partials.length; i++) {
-	  compiled = dust.compile(fs.readFileSync(keys.partials[i]).toString(), keys.partials[i]);
-	  dust.loadSource(compiled);
-	}
+	console.log("Loading partials...");
+	keys.partials.forEach(function(partial){
+	  dust.loadSource(dust.compile(fs.readFileSync(partial).toString(), partial));
+	  console.log(partial+" loaded.");
+	});
       }
+      
       // Compile and load the main template
-      compiled = dust.compile(fs.readFileSync(keys.template).toString(), keys.template);
-      dust.loadSource(compiled);
+      console.log("Loading template...");
+      dust.loadSource(dust.compile(fs.readFileSync(keys.template).toString(), keys.template));
+
       // Render the main template and write it to a file
+      console.log("Rendering...");
       dust.render(keys.template, keys, function(err, out) {
-	  e(err);
-	  fs.writeFile(keys.output_file, out);	
+	  if(err){throw err;}
+	  fs.writeFile(keys.output_file, out);
+  	  console.log("Done!");	  
       });   
   });
 }
