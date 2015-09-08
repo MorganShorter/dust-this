@@ -1,0 +1,10 @@
+# Gzip Compression to reduce outgoing bandwith
+    gzip on;
+    gzip_comp_level 2; 
+    gzip_vary on;
+    gzip_min_length 100;
+    gzip_proxied any;
+    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_buffers 16 8k;
+    gzip_static on; 
+    # /Gzip

@@ -1,0 +1,108 @@
+# Nginx Confiuration File Demo
+# This is a good example of how to use dust-this to avoid bugs, keep revisions consistent,
+# and avoid tedious editing of individual files
+
+user  {user} {group};
+worker_processes  1;
+
+error_log {log_path}/err.log;
+pid        {log_path}/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+  {>"mime.types.dust" /}
+  
+  #default access log
+  access_log {log_path}/access.log;
+  
+  keepalive_timeout  65;
+
+  proxy_cache_path {root_path}/cache keys_zone=one:10m max_size=200m;
+  
+  server {
+    listen {listen.http};
+    server_name example.com;
+    #Do something....
+  }
+  
+  # Redirects requests for the root domain to www. 
+  server {
+    listen {listen.ssl};
+    server_name example.com;
+
+    {>"ssl_params.dust"/}
+    
+    return 301 https://www.$http_host$request_uri; # force redirect to https://www.
+  }
+  
+  
+  {#subdomains.www}
+  #Public facing web server
+  server {
+    listen       {listen.ssl} default_server;
+    server_name  {url};
+
+    {#access}
+    {access[$idx]};{/access}
+
+    {>"ssl_params.dust"/}
+    {>"gzip_params.dust"/}
+
+    {?production}# Replace admin area with an error message
+    location /admin {
+    	return 404;
+    }
+    {/production}
+    
+    # Reverse proxy to backend 
+    location / {
+      {#production}
+      proxy_cache one;
+      proxy_cache_valid 24h;
+      {/production}
+      {>"proxy_params.dust"/}
+    }
+  
+    # robots.txt
+    location /robots.txt {
+      alias {root_path}/static/{robots}.robots.txt; ###
+    }
+  
+  }
+  {/subdomains.www}
+  
+  # Separate subdomain for Admins only.
+  {#subdomains.admin}
+  server {
+    listen       {listen.ssl};
+    server_name  {url};
+
+    #This section would includes extra authentication to allow admin access.
+ 
+    {#access}
+    {access[$idx]};{/access}
+
+    {>"ssl_params.dust"/}
+    {>"gzip_params.dust"/}
+
+    # Reverse proxy to backend 
+    location / {
+      {#production}
+      proxy_cache one;
+      proxy_cache_valid 24h;
+      {/production}
+      {>"proxy_params.dust"/}
+    }
+  
+    # robots.txt
+    location /robots.txt {
+      alias {root_path}/static/{robots}.robots.txt; ###
+    }  
+
+  } 
+  {/subdomains.admin}
+  
+}

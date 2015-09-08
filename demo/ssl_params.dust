@@ -1,0 +1,20 @@
+# SSL
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    
+    ssl_certificate      /path_to_ssl/{ssl_key_prefix}.crt; ###
+    ssl_certificate_key  /path_to_ssl/{ssl_key_prefix}.key; ###
+    
+    {?production}
+    # SSL OCSP Stapling. 
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 8.8.4.4 8.8.8.8; 
+    {/production}
+    
+    # Forward Secrecy & Diffie-Hellman Ephemeral Parameters
+    ssl_dhparam /path_to_ssl/{ssl_key_prefix}.dhparam.pem;
+
+    # HTTP Strict Transport Security(HSTS) 
+    add_header Strict-Transport-Security max-age=63000; 
+    
+    # /SSL
